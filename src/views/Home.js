@@ -3,7 +3,7 @@ import { Card, CardHeader, CardBody, CardTitle, CardText, CardLink } from 'react
 const Home = () => {
   return (
     <div>
-      <h1>Arab Vape HR System</h1>
+      <h1>Pool 888</h1>
     </div>
   )
 }

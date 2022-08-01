@@ -3,8 +3,8 @@
 //Template config options
 const themeConfig = {
   app: {
-    appName: 'ARAB VAPE',
-    appLogoImage: require('@src/assets/images/logo/av-logo.png').default
+    appName: 'Pool 888'
+    //appLogoImage: require('@src/assets/images/logo/av-logo.png').default
   },
   layout: {
     isRTL: false,
