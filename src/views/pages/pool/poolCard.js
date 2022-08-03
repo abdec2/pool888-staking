@@ -11,8 +11,6 @@ const PoolCard = ({ pool, apr }) => {
     const store = useSelector(state => state.ConnectWallet)
     const dispatch = useDispatch()
 
-    console.log(store)
-
     const toggle = id => {
         open === id ? setOpen() : setOpen(id)
     }
@@ -35,7 +33,7 @@ const PoolCard = ({ pool, apr }) => {
                         <CardText tag="div">
                             <div className='d-flex align-items-center justify-content-between'>
                                 <p className='fw-bolder'>APR:</p>
-                                <p className='fw-bolder'>{apr} %</p>
+                                <p className='fw-bolder'>{pool.APR} %</p>
                             </div>
                             <div className='d-flex align-items-center justify-content-between'>
                                 <p className='fw-bolder'>Earn:</p>

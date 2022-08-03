@@ -1,74 +1,36 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 import { Button, ButtonGroup, Card, CardBody, CardText, CardTitle, Col, Input, Row, Accordion, AccordionBody, AccordionHeader, AccordionItem } from 'reactstrap'
 import { ethers } from 'ethers'
+import UseFetchApr from '../../../hooks/useFetchApr'
 
-
-import USDC from './../../../icons/usdc.png'
-import ETH from './../../../icons/eth.png'
-import USDT from './../../../icons/usdt.png'
-import MATIC from './../../../icons/matic.png'
 import PoolCard from './poolCard'
 
 import CONFIG from './../../../config/config.json'
 import abi from './../../../config/abi.json'
+import pooldata from './../../../config/pools.json'
 
 const Pool = () => {
   const [rSelected, setRSelected] = useState(1)
-
-  const provider = new ethers.providers.InfuraProvider('rinkeby', process.env.REACT_APP_INFURA_ID)
-  const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, provider)
-  
-  
-  const pools = [
-    {
-      tokenAddress: "0x0f762a37718d4BeaD84f4ae66e00A56885Fe5507",
-      name: 'USDC', 
-      symbol: "USDC", 
-      depositFee: "5",
-      harvestLockup: "8",
-      logo: USDC, 
-      APR: 0
-    },
-    {
-      tokenAddress: "0xECff50c25543af32BADeaB542D0805b8B911cD4d",
-      name: 'USDT', 
-      symbol: "USDT", 
-      depositFee: "5",
-      harvestLockup: "8",
-      logo: USDT, 
-      APR: 0
-    },
-    {
-      tokenAddress: "0x9ff305836Feb02996d3baC69DB1394dAbd71481F",
-      name: 'WETH', 
-      symbol: "WETH", 
-      depositFee: "5",
-      harvestLockup: "8",
-      logo: ETH, 
-      APR: 0
-    },
-    {
-      tokenAddress: "0xC1526b5D8E74BC9583562Bc3AF3631c284C8E41d",
-      name: 'WMATIC', 
-      symbol: "WMATIC", 
-      depositFee: "5",
-      harvestLockup: "8",
-      logo: MATIC, 
-      APR: 0
-    }
-  ]
-
-  const getTokenAPR = async (tokenAddress) => {
-    const apr = await contract.getApr(tokenAddress)
-    return apr
-  }
+  const [data, setData] = useState([])
+  // const [fetchApr, setFetchApr] = useState(false)
+  // const {data} = UseFetchApr(fetchApr)
+  console.log(data)
 
   useEffect(() => {
-    pools.map((item, i) => {
-      const apr = getTokenAPR(item.tokenAddress).then(result => {
-        console.log(result.toString())
-        pools[i].APR = result.toString()
+    const provider = new ethers.providers.InfuraProvider('rinkeby', process.env.REACT_APP_INFURA_ID)
+    const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, provider)
+
+    const getTokenAPR = async () => {
+      const arr = []
+      pooldata.map(async (item, i) => {
+        const apr = await contract.getApr(item.tokenAddress)
+        arr.push({ ...item, APR: apr.toString() })
       })
+      return arr
+    }
+
+    getTokenAPR().then(res => {
+      setData(res)
     })
   }, [])
 
@@ -97,7 +59,7 @@ const Pool = () => {
       </div>
       <div className='py-3'>
         <Row>
-          {pools.map((item, i) => (
+          {data.map((item, i) => (
             <PoolCard key={i} pool={item} apr={item.APR} />
           ))}
         </Row>

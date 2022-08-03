@@ -1,0 +1,34 @@
+[
+    {
+        "tokenAddress": "0x0f762a37718d4BeaD84f4ae66e00A56885Fe5507",
+        "name": "USDC",
+        "symbol": "USDC",
+        "depositFee": "5",
+        "harvestLockup": "8",
+        "logo": "./img/usdc.png"
+    },
+    {
+        "tokenAddress": "0xECff50c25543af32BADeaB542D0805b8B911cD4d",
+        "name": "USDT",
+        "symbol": "USDT",
+        "depositFee": "5",
+        "harvestLockup": "8",
+        "logo": "./img/usdt.png"  
+    },
+    {
+        "tokenAddress": "0x9ff305836Feb02996d3baC69DB1394dAbd71481F",
+        "name": "WETH",
+        "symbol": "WETH",
+        "depositFee": "5",
+        "harvestLockup": "8",
+        "logo": "./img/eth.png"
+    },
+    {
+        "tokenAddress": "0xC1526b5D8E74BC9583562Bc3AF3631c284C8E41d",
+        "name": "WMATIC",
+        "symbol": "WMATIC",
+        "depositFee": "5",
+        "harvestLockup": "8",
+        "logo": "./img/matic.png"
+    }
+]
