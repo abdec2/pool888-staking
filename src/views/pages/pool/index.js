@@ -1,37 +1,17 @@
 import { useEffect, useReducer, useState } from 'react'
 import { Button, ButtonGroup, Card, CardBody, CardText, CardTitle, Col, Input, Row, Accordion, AccordionBody, AccordionHeader, AccordionItem } from 'reactstrap'
-import { ethers } from 'ethers'
-import UseFetchApr from '../../../hooks/useFetchApr'
-
+import { getPoolData } from './store'
 import PoolCard from './poolCard'
-
-import CONFIG from './../../../config/config.json'
-import abi from './../../../config/abi.json'
-import pooldata from './../../../config/pools.json'
+import { useDispatch, useSelector } from 'react-redux'
 
 const Pool = () => {
   const [rSelected, setRSelected] = useState(1)
-  const [data, setData] = useState([])
-  // const [fetchApr, setFetchApr] = useState(false)
-  // const {data} = UseFetchApr(fetchApr)
-  console.log(data)
+  const store = useSelector(store => store.PoolData)
+  const dispatch = useDispatch()
+  const data = store.pools
 
   useEffect(() => {
-    const provider = new ethers.providers.InfuraProvider('rinkeby', process.env.REACT_APP_INFURA_ID)
-    const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, provider)
-
-    const getTokenAPR = async () => {
-      const arr = []
-      pooldata.map(async (item, i) => {
-        const apr = await contract.getApr(item.tokenAddress)
-        arr.push({ ...item, APR: apr.toString() })
-      })
-      return arr
-    }
-
-    getTokenAPR().then(res => {
-      setData(res)
-    })
+    dispatch(getPoolData())
   }, [])
 
   return (

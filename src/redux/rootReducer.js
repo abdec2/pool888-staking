@@ -6,6 +6,7 @@ import employees from './../views/pages/employees/store'
 import companies from './../views/pages/company/store'
 import notifications from './../components/navbar/store'
 import ConnectWallet from './connectWallet'
+import PoolData from './../views/pages/pool/store'
 
 const rootReducer = {
   ConnectWallet,
@@ -14,7 +15,8 @@ const rootReducer = {
   layout,
   employees,
   companies,
-  notifications
+  notifications, 
+  PoolData
 }
 
 export default rootReducer

@@ -6,7 +6,7 @@ import abi from './../config/abi.json'
 import pools from './../config/pools.json'
 
 
-const UseFetchApr = (fetchApr) => {
+const UseFetchApr = (fetchApr, setFetchApr) => {
     const [data, setData] = useState([])
 
     const provider = new ethers.providers.InfuraProvider('rinkeby', process.env.REACT_APP_INFURA_ID)
@@ -24,6 +24,7 @@ const UseFetchApr = (fetchApr) => {
     useEffect(() => {
         getTokenAPR().then(res => {
             setData(res)
+            setFetchApr(true)
         })
         
     }, [fetchApr])
