@@ -1,18 +1,65 @@
 import { Button, ButtonGroup, Card, CardBody, CardText, CardTitle, Col, Input, Row, Accordion, AccordionBody, AccordionHeader, AccordionItem } from 'reactstrap'
 
 import { Plus, Minus } from 'react-feather'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
+import { approveMATIC, approveUSDC, approveUSDT, approveWETH } from './store'
+
 import { connectWallet } from '../../../redux/connectWallet'
+import { ethers } from 'ethers'
+
+import CONFIG from './../../../config/config.json'
+import tokenAbi from './../../../config/tokenAbi.json'
 
 const PoolCard = ({ pool, apr }) => {
     const [open, setOpen] = useState('0')
+    const withdraw = useRef()
+    const stake = useRef()
+    const withdrawAmount = useRef()
+    const stakeAmount = useRef()
+
     const store = useSelector(state => state.ConnectWallet)
+    const poolStore = useSelector(state => state.PoolData)
     const dispatch = useDispatch()
 
     const toggle = id => {
         open === id ? setOpen() : setOpen(id)
+    }
+
+    const showWithDraw = () => {
+        const withdrawDiv = withdraw.current
+        const stakeDiv = stake.current
+
+        withdrawDiv.classList.remove('d-none')
+        stakeDiv.classList.remove('d-none')
+        stakeDiv.classList.add('d-none')
+    }
+
+    const showStake = () => {
+        const withdrawDiv = withdraw.current
+        const stakeDiv = stake.current
+
+        stakeDiv.classList.remove('d-none')
+        withdrawDiv.classList.remove('d-none')
+        withdrawDiv.classList.add('d-none')
+    }
+
+    const handleApprove = async () => {
+        const provider = store.provider
+        if (pool.name.toUpperCase() === "USDC") {
+            console.log(pool.name)
+            dispatch(approveUSDC({ provider, tokenAddress: pool.tokenAddress }))
+        } else if (pool.name.toUpperCase() === "USDT") {
+            console.log(pool.name)
+            dispatch(approveUSDT({ provider, tokenAddress: pool.tokenAddress }))
+        } else if (pool.name.toUpperCase() === "WETH") {
+            console.log(pool.name)
+            dispatch(approveWETH({ provider, tokenAddress: pool.tokenAddress }))
+        } else {
+            console.log(pool.name)
+            dispatch(approveMATIC({ provider, tokenAddress: pool.tokenAddress }))
+        }
     }
 
     useEffect(() => {
@@ -26,7 +73,7 @@ const PoolCard = ({ pool, apr }) => {
                     <CardBody>
                         <CardTitle tag='div'>
                             <div className='d-flex align-items-center justify-content-between'>
-                                <img style={{width: '20%'}} src={pool.logo} alt="" />
+                                <img style={{ width: '20%' }} src={pool.logo} alt="" />
                                 <h3 className='m-0'>{pool.symbol}</h3>
                             </div>
                         </CardTitle>
@@ -60,27 +107,41 @@ const PoolCard = ({ pool, apr }) => {
 
                             {store.account && (
                                 <>
-                                    <div className='d-flex align-items-center justify-content-between'>
-                                        <h5 className='fw-bolder'>{pool.symbol} STAKED</h5>
-                                    </div>
-                                    <div className='d-flex align-items-center justify-content-between mb-1'>
-                                        <h1 className='fw-bolder mb-0'>0.00</h1>
-                                        <div className='d-flex align-items-center justify-content-center'>
-                                            <Button className='rounded-pill me-1' color='primary' outline>
-                                                <Minus size={15} />
-                                            </Button>
-                                            <Button className='rounded-pill' color='primary' outline>
-                                                <Plus size={15} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                    <div className='d-flex align-items-center justify-content-center mt-2'>
-                                        <Input type='text' />
+
+                                    {
+                                        poolStore.approve[pool.name] && (
+                                            <>
+                                                <div className='d-flex align-items-center justify-content-between'>
+                                                    <h5 className='fw-bolder'>{pool.symbol} STAKED</h5>
+                                                </div>
+                                                <div className='d-flex align-items-center justify-content-between mb-1'>
+                                                    <h1 className='fw-bolder mb-0'>0.00</h1>
+                                                    <div className='d-flex align-items-center justify-content-center'>
+                                                        <Button className='rounded-pill me-1' color='primary' outline onClick={showWithDraw}>
+                                                            <Minus size={15} />
+                                                        </Button>
+                                                        <Button className='rounded-pill' color='primary' outline onClick={showStake}>
+                                                            <Plus size={15} />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )
+                                    }
+
+                                    <div ref={withdraw} className='withdraw d-flex align-items-center justify-content-center mt-2 d-none'>
+                                        <Input ref={withdrawAmount} type='text' placeholder='Withdraw Amount' />
                                         <Button color='primary' className='rounded-pill ms-1'>Submit</Button>
                                     </div>
-                                    <div className='mt-2 d-flex align-items-center justify-content-center'>
-                                        <Button className='rounded-pill' color='primary'>Approve Contract</Button>
+                                    <div ref={stake} className='stake d-flex align-items-center justify-content-center mt-2 d-none'>
+                                        <Input ref={stakeAmount} type='text' placeholder='Stake Amount' />
+                                        <Button color='primary' className='rounded-pill ms-1'>Submit</Button>
                                     </div>
+                                    {!poolStore.approve[pool.name] && (
+                                        <div className='mt-2 d-flex align-items-center justify-content-center'>
+                                            <Button className='rounded-pill' color='primary' onClick={handleApprove}>Approve Contract</Button>
+                                        </div>
+                                    )}
                                 </>
                             )}
                             {!store.account && (
