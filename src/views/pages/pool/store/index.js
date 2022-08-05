@@ -21,7 +21,7 @@ export const getPoolData = createAsyncThunk('getPoolData', async () => {
 
 export const approveUSDC = createAsyncThunk('approveUSDC', async (params) => {
     try {
-        const {provider, tokenAddress} = params
+        const { provider, tokenAddress } = params
         const signer = provider.getSigner()
         const contract = new ethers.Contract(tokenAddress, tokenAbi, signer)
         const address = await signer.getAddress()
@@ -37,7 +37,7 @@ export const approveUSDC = createAsyncThunk('approveUSDC', async (params) => {
 
 export const approveUSDT = createAsyncThunk('approveUSDT', async (params) => {
     try {
-        const {provider, tokenAddress} = params
+        const { provider, tokenAddress } = params
         const signer = provider.getSigner()
         const contract = new ethers.Contract(tokenAddress, tokenAbi, signer)
         const address = await signer.getAddress()
@@ -53,7 +53,7 @@ export const approveUSDT = createAsyncThunk('approveUSDT', async (params) => {
 
 export const approveWETH = createAsyncThunk('approveWETH', async (params) => {
     try {
-        const {provider, tokenAddress} = params
+        const { provider, tokenAddress } = params
         const signer = provider.getSigner()
         const contract = new ethers.Contract(tokenAddress, tokenAbi, signer)
         const address = await signer.getAddress()
@@ -69,7 +69,7 @@ export const approveWETH = createAsyncThunk('approveWETH', async (params) => {
 
 export const approveMATIC = createAsyncThunk('approveMATIC', async (params) => {
     try {
-        const {provider, tokenAddress} = params
+        const { provider, tokenAddress } = params
         const signer = provider.getSigner()
         const contract = new ethers.Contract(tokenAddress, tokenAbi, signer)
         const address = await signer.getAddress()
@@ -83,15 +83,36 @@ export const approveMATIC = createAsyncThunk('approveMATIC', async (params) => {
     }
 })
 
+export const getStakeBalance = createAsyncThunk('getStakeBalance', async (params) => {
+    const { provider } = params
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+    const address = await signer.getAddress()
+    const stakeBalanceArr = poolData.map(async (item) => {
+        const stake = await contract.stakeOf(address, item.tokenAddress)
+        const stakeObj = { name: item.name, balance: stake.toString() }
+        return stakeObj
+    })
+
+    const returnVal = Promise.all(stakeBalanceArr).then(values => values)
+    return returnVal
+})
+
 export const poolSlice = createSlice({
     name: "pools",
     initialState: {
-        pools: [], 
+        pools: [],
         approve: {
             USDC: false,
-            USDT: false, 
+            USDT: false,
             WETH: false,
             MATIC: false
+        },
+        stakeBalance: {
+            USDC: 0,
+            USDT: 0,
+            WETH: 0,
+            MATIC: 0
         }
     },
     reducers: {},
@@ -111,6 +132,11 @@ export const poolSlice = createSlice({
             })
             .addCase(approveMATIC.fulfilled, (state, action) => {
                 state.approve.MATIC = action.payload
+            })
+            .addCase(getStakeBalance.fulfilled, (state, action) => {
+                action.payload.map(item => {
+                    state.stakeBalance[item.name] = item.balance
+                })
             })
     }
 })

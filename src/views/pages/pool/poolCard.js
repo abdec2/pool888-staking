@@ -11,6 +11,7 @@ import { ethers } from 'ethers'
 
 import CONFIG from './../../../config/config.json'
 import tokenAbi from './../../../config/tokenAbi.json'
+import abi from './../../../config/abi.json'
 
 const PoolCard = ({ pool, apr }) => {
     const [open, setOpen] = useState('0')
@@ -22,6 +23,8 @@ const PoolCard = ({ pool, apr }) => {
     const store = useSelector(state => state.ConnectWallet)
     const poolStore = useSelector(state => state.PoolData)
     const dispatch = useDispatch()
+
+    const stakedBalance = (parseInt(poolStore.stakeBalance[pool.name]) === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.stakeBalance[pool.name], pool.decimal)
 
     const toggle = id => {
         open === id ? setOpen() : setOpen(id)
@@ -60,6 +63,52 @@ const PoolCard = ({ pool, apr }) => {
             console.log(pool.name)
             dispatch(approveMATIC({ provider, tokenAddress: pool.tokenAddress }))
         }
+    }
+
+    const handleWithdraw = async () => {
+        const amount = withdrawAmount.current.value
+        const expression = /^[1-9]\d*(\.\d+)?$/
+        if (amount === '') {
+            return
+        }
+        const amountTest = expression.test(amount)
+        if (!amountTest) {
+            return
+        }
+        const weiAmount = ethers.utils.parseUnits(amount, pool.decimal)
+        const provider = store.provider
+        const signer = await provider.getSigner()
+        const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+        const estimateGas = await contract.estimateGas.unStake(weiAmount, pool.tokenAddress)
+        const tx = {
+            gasLimit: estimateGas.toString()
+        }
+        const withdrawTx = await contract.unStake(weiAmount, pool.tokenAddress, tx)
+        await withdrawTx.wait()
+        console.log(withdrawTx)
+    }
+
+    const handleStake = async () => {
+        const amount = stakeAmount.current.value
+        const expression = /^[1-9]\d*(\.\d+)?$/
+        if (amount === '') {
+            return
+        }
+        const amountTest = expression.test(amount)
+        if (!amountTest) {
+            return
+        }
+        const weiAmount = ethers.utils.parseUnits(amount, pool.decimal)
+        const provider = store.provider
+        const signer = await provider.getSigner()
+        const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+        const estimateGas = await contract.estimateGas.createStake(weiAmount, pool.tokenAddress)
+        const tx = {
+            gasLimit: estimateGas.toString()
+        }
+        const stakeTx = await contract.createStake(weiAmount, pool.tokenAddress, tx)
+        await stakeTx.wait()
+        console.log(stakeTx)
     }
 
     useEffect(() => {
@@ -108,14 +157,14 @@ const PoolCard = ({ pool, apr }) => {
                             {store.account && (
                                 <>
 
-                                    {
-                                        poolStore.approve[pool.name] && (
+                                    {   // remove ! from !poolStore.approve[pool.name]
+                                        !poolStore.approve[pool.name] && (
                                             <>
                                                 <div className='d-flex align-items-center justify-content-between'>
                                                     <h5 className='fw-bolder'>{pool.symbol} STAKED</h5>
                                                 </div>
                                                 <div className='d-flex align-items-center justify-content-between mb-1'>
-                                                    <h1 className='fw-bolder mb-0'>0.00</h1>
+                                                    <h1 className='fw-bolder mb-0'>{stakedBalance}</h1>
                                                     <div className='d-flex align-items-center justify-content-center'>
                                                         <Button className='rounded-pill me-1' color='primary' outline onClick={showWithDraw}>
                                                             <Minus size={15} />
@@ -130,12 +179,12 @@ const PoolCard = ({ pool, apr }) => {
                                     }
 
                                     <div ref={withdraw} className='withdraw d-flex align-items-center justify-content-center mt-2 d-none'>
-                                        <Input ref={withdrawAmount} type='text' placeholder='Withdraw Amount' />
-                                        <Button color='primary' className='rounded-pill ms-1'>Submit</Button>
+                                        <Input innerRef={withdrawAmount} type='text' placeholder='Withdraw Amount' />
+                                        <Button color='primary' className='rounded-pill ms-1' onClick={handleWithdraw}>Submit</Button>
                                     </div>
                                     <div ref={stake} className='stake d-flex align-items-center justify-content-center mt-2 d-none'>
-                                        <Input ref={stakeAmount} type='text' placeholder='Stake Amount' />
-                                        <Button color='primary' className='rounded-pill ms-1'>Submit</Button>
+                                        <Input innerRef={stakeAmount} type='text' placeholder='Stake Amount'/>
+                                        <Button color='primary' className='rounded-pill ms-1' onClick={handleStake}>Submit</Button>
                                     </div>
                                     {!poolStore.approve[pool.name] && (
                                         <div className='mt-2 d-flex align-items-center justify-content-center'>

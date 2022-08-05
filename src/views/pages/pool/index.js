@@ -1,18 +1,22 @@
 import { useEffect, useReducer, useState } from 'react'
 import { Button, ButtonGroup, Card, CardBody, CardText, CardTitle, Col, Input, Row, Accordion, AccordionBody, AccordionHeader, AccordionItem } from 'reactstrap'
-import { getPoolData } from './store'
+import { getPoolData, getStakeBalance } from './store'
 import PoolCard from './poolCard'
 import { useDispatch, useSelector } from 'react-redux'
 
 const Pool = () => {
   const [rSelected, setRSelected] = useState(1)
   const store = useSelector(store => store.PoolData)
+  const connectionStore = useSelector(state => state.ConnectWallet)
   const dispatch = useDispatch()
   const data = store.pools
 
   useEffect(() => {
     dispatch(getPoolData())
-  }, [])
+    if (connectionStore.account) {
+      dispatch(getStakeBalance({provider: connectionStore.provider}))
+    }
+  }, [connectionStore.account])
 
   return (
     <>
