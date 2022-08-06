@@ -90,12 +90,22 @@ export const getStakeBalance = createAsyncThunk('getStakeBalance', async (params
     const address = await signer.getAddress()
     const stakeBalanceArr = poolData.map(async (item) => {
         const stake = await contract.stakeOf(address, item.tokenAddress)
-        const stakeObj = { name: item.name, balance: stake.toString() }
+        const stakeObj = { name: item.name, balance: stake}
         return stakeObj
     })
 
     const returnVal = Promise.all(stakeBalanceArr).then(values => values)
     return returnVal
+})
+
+export const getRewards = createAsyncThunk('getRewards', async (params) => {
+    const {provider, tokenAddress, name} = params
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+    const reward = await contract.getRewardsPerMinute(tokenAddress)
+    const rewardObj = { name, reward}
+    
+    return rewardObj
 })
 
 export const poolSlice = createSlice({
@@ -106,13 +116,19 @@ export const poolSlice = createSlice({
             USDC: false,
             USDT: false,
             WETH: false,
-            MATIC: false
+            WMATIC: false
         },
         stakeBalance: {
             USDC: 0,
             USDT: 0,
             WETH: 0,
-            MATIC: 0
+            WMATIC: 0
+        }, 
+        rewards: {
+            USDC: 0,
+            USDT: 0,
+            WETH: 0,
+            WMATIC: 0
         }
     },
     reducers: {},
@@ -137,6 +153,10 @@ export const poolSlice = createSlice({
                 action.payload.map(item => {
                     state.stakeBalance[item.name] = item.balance
                 })
+                
+            })
+            .addCase(getRewards.fulfilled, (state, action) => {
+                state.rewards[action.payload.name] = action.payload.reward
             })
     }
 })

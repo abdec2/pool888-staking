@@ -4,7 +4,7 @@ import { Plus, Minus } from 'react-feather'
 import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { approveMATIC, approveUSDC, approveUSDT, approveWETH } from './store'
+import { approveMATIC, approveUSDC, approveUSDT, approveWETH, getStakeBalance, getRewards } from './store'
 
 import { connectWallet } from '../../../redux/connectWallet'
 import { ethers } from 'ethers'
@@ -24,7 +24,11 @@ const PoolCard = ({ pool, apr }) => {
     const poolStore = useSelector(state => state.PoolData)
     const dispatch = useDispatch()
 
-    const stakedBalance = (parseInt(poolStore.stakeBalance[pool.name]) === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.stakeBalance[pool.name], pool.decimal)
+    console.log(poolStore.rewards)
+
+    const stakedBalance = (poolStore.stakeBalance[pool.name] === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.stakeBalance[pool.name], pool.decimal)
+
+    const reward = (poolStore.rewards[pool.name] === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.rewards[pool.name], pool.decimal)
 
     const toggle = id => {
         open === id ? setOpen() : setOpen(id)
@@ -34,18 +38,26 @@ const PoolCard = ({ pool, apr }) => {
         const withdrawDiv = withdraw.current
         const stakeDiv = stake.current
 
-        withdrawDiv.classList.remove('d-none')
-        stakeDiv.classList.remove('d-none')
-        stakeDiv.classList.add('d-none')
+        if (withdrawDiv.classList.contains('d-none')) {
+            withdrawDiv.classList.remove('d-none')
+            stakeDiv.classList.add('d-none')
+        } else {
+            withdrawDiv.classList.add('d-none')
+        }
+        
     }
 
     const showStake = () => {
         const withdrawDiv = withdraw.current
         const stakeDiv = stake.current
 
-        stakeDiv.classList.remove('d-none')
-        withdrawDiv.classList.remove('d-none')
-        withdrawDiv.classList.add('d-none')
+        if (stakeDiv.classList.contains('d-none')) {
+            stakeDiv.classList.remove('d-none')
+            withdrawDiv.classList.add('d-none')
+        } else {
+            stakeDiv.classList.add('d-none')
+        }
+        
     }
 
     const handleApprove = async () => {
@@ -86,6 +98,7 @@ const PoolCard = ({ pool, apr }) => {
         const withdrawTx = await contract.unStake(weiAmount, pool.tokenAddress, tx)
         await withdrawTx.wait()
         console.log(withdrawTx)
+        dispatch(getStakeBalance({provider: store.provider}))
     }
 
     const handleStake = async () => {
@@ -109,11 +122,16 @@ const PoolCard = ({ pool, apr }) => {
         const stakeTx = await contract.createStake(weiAmount, pool.tokenAddress, tx)
         await stakeTx.wait()
         console.log(stakeTx)
+        dispatch(getStakeBalance({provider: store.provider}))
     }
 
     useEffect(() => {
-        console.log(apr)
-    }, [apr])
+        if (store.account) {
+            setInterval(() => {
+                dispatch(getRewards({provider: store.provider, tokenAddress: pool.tokenAddress, name: pool.name}))
+            }, 60000)   
+        }
+    }, [store.account])
 
     return (
         <>
@@ -148,7 +166,7 @@ const PoolCard = ({ pool, apr }) => {
                             </div>
 
                             <div className='d-flex align-items-center justify-content-between mb-1'>
-                                <h1 className='fw-bolder mb-0'>0.00</h1>
+                                <h3 className='fw-bolder mb-0'>{parseFloat(reward).toFixed(2)}</h3>
                                 <Button className='rounded-pill' color='primary' outline>
                                     Harvest
                                 </Button>
@@ -158,13 +176,13 @@ const PoolCard = ({ pool, apr }) => {
                                 <>
 
                                     {   // remove ! from !poolStore.approve[pool.name]
-                                        !poolStore.approve[pool.name] && (
+                                        poolStore.approve[pool.name] && (
                                             <>
                                                 <div className='d-flex align-items-center justify-content-between'>
                                                     <h5 className='fw-bolder'>{pool.symbol} STAKED</h5>
                                                 </div>
                                                 <div className='d-flex align-items-center justify-content-between mb-1'>
-                                                    <h1 className='fw-bolder mb-0'>{stakedBalance}</h1>
+                                                    <h3 className='fw-bolder mb-0'>{stakedBalance}</h3>
                                                     <div className='d-flex align-items-center justify-content-center'>
                                                         <Button className='rounded-pill me-1' color='primary' outline onClick={showWithDraw}>
                                                             <Minus size={15} />
