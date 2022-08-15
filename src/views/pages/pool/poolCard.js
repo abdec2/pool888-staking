@@ -28,7 +28,7 @@ const PoolCard = ({ pool, apr }) => {
 
     const stakedBalance = (poolStore.stakeBalance[pool.name] === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.stakeBalance[pool.name], pool.decimal)
 
-    const reward = (poolStore.rewards[pool.name] === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.rewards[pool.name], pool.decimal)
+    const reward = (poolStore.rewards[pool.name] === 0) ? 0.00 : ethers.utils.formatUnits(poolStore.rewards[pool.name], 8)
 
     const toggle = id => {
         open === id ? setOpen() : setOpen(id)
@@ -166,7 +166,7 @@ const PoolCard = ({ pool, apr }) => {
                             </div>
 
                             <div className='d-flex align-items-center justify-content-between mb-1'>
-                                <h3 className='fw-bolder mb-0'>{parseFloat(reward).toFixed(2)}</h3>
+                                <h3 className='fw-bolder mb-0'>{parseFloat(reward).toFixed(8)}</h3>
                                 <Button className='rounded-pill' color='primary' outline>
                                     Harvest
                                 </Button>
