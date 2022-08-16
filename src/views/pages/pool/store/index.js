@@ -19,7 +19,18 @@ export const getPoolData = createAsyncThunk('getPoolData', async () => {
     return returnVal
 })
 
-export const approveUSDC = createAsyncThunk('approveUSDC', async (params) => {
+export const getRewards = createAsyncThunk('getRewards', async (params) => {
+    const {provider, tokenAddress, name} = params
+    const signer = provider.getSigner()
+    const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+    const reward = await contract.getRewardsPerMinute(tokenAddress)
+    const rewardObj = { name, reward}
+    console.log(name, reward.toString())
+    
+    return rewardObj
+})
+
+export const approveUSDC = createAsyncThunk('approveUSDC', async (params, {dispatch, getState}) => {
     try {
         const { provider, tokenAddress } = params
         const signer = provider.getSigner()
@@ -28,6 +39,7 @@ export const approveUSDC = createAsyncThunk('approveUSDC', async (params) => {
         const balance = await contract.balanceOf(address)
         const tx = await contract.approve(CONFIG.CONTRACT_ADDRESS, balance)
         await tx.wait()
+        await dispatch(getRewards({provider, tokenAddress, name: 'USDC'}))
         return true
     } catch (e) {
         console.log(e)
@@ -35,7 +47,7 @@ export const approveUSDC = createAsyncThunk('approveUSDC', async (params) => {
     }
 })
 
-export const approveUSDT = createAsyncThunk('approveUSDT', async (params) => {
+export const approveUSDT = createAsyncThunk('approveUSDT', async (params, {dispatch, getState}) => {
     try {
         const { provider, tokenAddress } = params
         const signer = provider.getSigner()
@@ -44,6 +56,7 @@ export const approveUSDT = createAsyncThunk('approveUSDT', async (params) => {
         const balance = await contract.balanceOf(address)
         const tx = await contract.approve(CONFIG.CONTRACT_ADDRESS, balance)
         await tx.wait()
+        await dispatch(getRewards({provider, tokenAddress, name: 'USDT'}))
         return true
     } catch (e) {
         console.log(e)
@@ -51,7 +64,7 @@ export const approveUSDT = createAsyncThunk('approveUSDT', async (params) => {
     }
 })
 
-export const approveWETH = createAsyncThunk('approveWETH', async (params) => {
+export const approveWETH = createAsyncThunk('approveWETH', async (params, {dispatch, getState}) => {
     try {
         const { provider, tokenAddress } = params
         const signer = provider.getSigner()
@@ -60,6 +73,7 @@ export const approveWETH = createAsyncThunk('approveWETH', async (params) => {
         const balance = await contract.balanceOf(address)
         const tx = await contract.approve(CONFIG.CONTRACT_ADDRESS, balance)
         await tx.wait()
+        await dispatch(getRewards({provider, tokenAddress, name: 'WETH'}))
         return true
     } catch (e) {
         console.log(e)
@@ -67,7 +81,7 @@ export const approveWETH = createAsyncThunk('approveWETH', async (params) => {
     }
 })
 
-export const approveMATIC = createAsyncThunk('approveMATIC', async (params) => {
+export const approveMATIC = createAsyncThunk('approveMATIC', async (params, {dispatch, getState}) => {
     try {
         const { provider, tokenAddress } = params
         const signer = provider.getSigner()
@@ -76,6 +90,7 @@ export const approveMATIC = createAsyncThunk('approveMATIC', async (params) => {
         const balance = await contract.balanceOf(address)
         const tx = await contract.approve(CONFIG.CONTRACT_ADDRESS, balance)
         await tx.wait()
+        await dispatch(getRewards({provider, tokenAddress, name: 'WMATIC'}))
         return true
     } catch (e) {
         console.log(e)
@@ -98,14 +113,14 @@ export const getStakeBalance = createAsyncThunk('getStakeBalance', async (params
     return returnVal
 })
 
-export const getRewards = createAsyncThunk('getRewards', async (params) => {
+export const harvest = createAsyncThunk('harvest', async (params, {dispatch, getState}) => {
     const {provider, tokenAddress, name} = params
     const signer = provider.getSigner()
     const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
-    const reward = await contract.getRewardsPerMinute(tokenAddress)
-    const rewardObj = { name, reward}
-    
-    return rewardObj
+    const rewardtx = await contract.getRewards(tokenAddress)
+
+    await dispatch(getPoolData())
+    await dispatch(getRewards({provider, tokenAddress, name}))
 })
 
 export const poolSlice = createSlice({
@@ -147,7 +162,7 @@ export const poolSlice = createSlice({
                 state.approve.WETH = action.payload
             })
             .addCase(approveMATIC.fulfilled, (state, action) => {
-                state.approve.MATIC = action.payload
+                state.approve.WMATIC = action.payload
             })
             .addCase(getStakeBalance.fulfilled, (state, action) => {
                 action.payload.map(item => {

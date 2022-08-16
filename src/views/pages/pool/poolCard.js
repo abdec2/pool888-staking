@@ -4,7 +4,7 @@ import { Plus, Minus } from 'react-feather'
 import { useEffect, useRef, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
-import { approveMATIC, approveUSDC, approveUSDT, approveWETH, getStakeBalance, getRewards } from './store'
+import { approveMATIC, approveUSDC, approveUSDT, approveWETH, getStakeBalance, getRewards, harvest, getPoolData } from './store'
 
 import { connectWallet } from '../../../redux/connectWallet'
 import { ethers } from 'ethers'
@@ -99,6 +99,7 @@ const PoolCard = ({ pool, apr }) => {
         await withdrawTx.wait()
         console.log(withdrawTx)
         dispatch(getStakeBalance({provider: store.provider}))
+        dispatch(getPoolData())
     }
 
     const handleStake = async () => {
@@ -122,7 +123,19 @@ const PoolCard = ({ pool, apr }) => {
         const stakeTx = await contract.createStake(weiAmount, pool.tokenAddress, tx)
         await stakeTx.wait()
         console.log(stakeTx)
-        dispatch(getStakeBalance({provider: store.provider}))
+         dispatch(getStakeBalance({provider: store.provider}))
+         dispatch(getPoolData())
+    }
+
+    const handleHarvest = async () => {
+        const provider = store.provider
+        const signer = await provider.getSigner()
+        const contract = new ethers.Contract(CONFIG.CONTRACT_ADDRESS, abi, signer)
+        const isHarvestOpen = await contract.harvestOpen(pool.tokenAddress)
+        console.log(isHarvestOpen)
+        if (isHarvestOpen && poolStore.rewards[pool.name] !== 0) {
+            dispatch(harvest({provider, tokenAddress: pool.tokenAddress, name: pool.name}))
+        }
     }
 
     useEffect(() => {
@@ -146,7 +159,7 @@ const PoolCard = ({ pool, apr }) => {
                         </CardTitle>
                         <CardText tag="div">
                             <div className='d-flex align-items-center justify-content-between'>
-                                <p className='fw-bolder'>APR:</p>
+                                <p className='fw-bolder'>APY:</p>
                                 <p className='fw-bolder'>{pool.APR} %</p>
                             </div>
                             <div className='d-flex align-items-center justify-content-between'>
@@ -167,7 +180,7 @@ const PoolCard = ({ pool, apr }) => {
 
                             <div className='d-flex align-items-center justify-content-between mb-1'>
                                 <h3 className='fw-bolder mb-0'>{parseFloat(reward).toFixed(8)}</h3>
-                                <Button className='rounded-pill' color='primary' outline>
+                                <Button className='rounded-pill' color='primary' outline onClick={handleHarvest}>
                                     Harvest
                                 </Button>
                             </div>
